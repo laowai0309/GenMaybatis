@@ -1,48 +1,50 @@
+package com.bbx.mybatisUtils;
+
 public class ColumnInfo {
     /**
-     * 列对应的变量（驼峰命名-首字母小写）
+     * 字段对应的属性名称 - 首字母小写
      */
-    public String name;
+    private String name;
 
     /**
-     * 列对应的变量名（驼峰命名-首字母大写）
+     * 字段对应的属性名称 - 首字母大写
      */
-    public String u_name;
+    private String u_name;
 
     /**
-     * 变量类型
+     * 属性类型
      */
-    public String type;
+    private String type;
 
     /**
      * 对应的JDBC类型
      */
-    public String jdbc_type;
+    private String jdbc_type;
 
     /**
-     * 注解
+     * 属性需要添加的注解
      */
-    public String annotation;
+    private String annotation;
 
     /**
-     * 数据库列名称
+     * 数据库字段名称
      */
-    public String db_name;
+    private String db_name;
 
     /**
-     *  数据库类型
+     *  数据库字段类型
      */
-    public String db_type;
+    private String db_type;
 
     /**
-     * 数据库注释
+     * 数据库字段注释
      */
-    public String db_comments;
+    private String db_comments;
 
     /**
      * 是否为数据库主键
      */
-    public Boolean db_key;
+    private Boolean db_key;
 
     public String getName() {
         return name;

@@ -1,3 +1,5 @@
+package com.bbx.mybatisUtils;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.io.IOUtils;
@@ -14,6 +16,20 @@ import java.util.*;
 
 
 public class GenMybatisHandle {
+
+    // 表注释
+    final String SQL_TAB_COMMENTS  = "SELECT TABLE_NAME, COMMENTS FROM USER_TAB_COMMENTS WHERE TABLE_NAME = ?";
+
+    // 获得表主键
+    final String SQL_CONSTRAINT = "SELECT B.COLUMN_NAME FROM USER_CONSTRAINTS A, USER_CONS_COLUMNS B " +
+            "WHERE A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND A.CONSTRAINT_TYPE = 'P' AND B.TABLE_NAME= ? ";
+
+    // 表包含的列
+    final String SQL_TAB_COLUMNS = "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ?";
+
+    // 列注释
+    final String SQL_COL_COMMENTS = "SELECT TABLE_NAME, COLUMN_NAME, COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME = ?";
+
 
     /**
      * 路径
@@ -112,24 +128,29 @@ public class GenMybatisHandle {
 
 
     /**
+     * 是否开启 驼峰命名
+     */
+    private Boolean open_hump;
+
+    /**
      * 表列信息
      */
-    public List<ColumnInfo> columns = new ArrayList<>();
+    private List<ColumnInfo> columns = new ArrayList<>();
 
     /**
      * 类型注解
      */
-    public Map<String, String> typeAnnotationtype = new LinkedHashMap<String, String>();
+    private Map<String, String> typeAnnotationtype = new LinkedHashMap<String, String>();
 
     /**
      * 数据库类型映射到 Java K 数据库, V JAVA
      */
-    public Map<String, String> typeMapping = new HashMap<String, String>();
+    private Map<String, String> typeMapping = new HashMap<String, String>();
 
     /**
      * 数据库类型映射到 JDBC K 数据库, V JAVA
      */
-    public Map<String, String> typeMappingJdbc = new HashMap<String, String>();
+    private Map<String, String> typeMappingJdbc = new HashMap<String, String>();
 
     /**
      * 生成代码
@@ -161,8 +182,7 @@ public class GenMybatisHandle {
         statement = conn.createStatement();
 
         // 表注释
-        String sql = "SELECT TABLE_NAME, COMMENTS FROM USER_TAB_COMMENTS WHERE TABLE_NAME = ?";
-        PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(SQL_TAB_COMMENTS);
         ps.setString(1, StringUtils.upperCase(db_table_name));
         rs = ps.executeQuery();
         if (rs.next()){
@@ -174,9 +194,7 @@ public class GenMybatisHandle {
         }
 
         // 获得表主键
-        sql = "SELECT B.COLUMN_NAME FROM USER_CONSTRAINTS A, USER_CONS_COLUMNS B " +
-            "WHERE A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND A.CONSTRAINT_TYPE = 'P' AND B.TABLE_NAME= ? ";
-        ps = conn.prepareStatement(sql);
+        ps = conn.prepareStatement(SQL_CONSTRAINT);
         ps.setString(1, StringUtils.upperCase(db_table_name));
         rs = ps.executeQuery();
         if (rs.next()){
@@ -184,22 +202,27 @@ public class GenMybatisHandle {
         }
 
         //  表包含的列
-        sql = "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ?";
-        ps = conn.prepareStatement(sql);
+        ps = conn.prepareStatement(SQL_TAB_COLUMNS);
         ps.setString(1, StringUtils.upperCase(db_table_name));
         rs = ps.executeQuery();
         while (rs.next()) {
             ColumnInfo ci = new ColumnInfo();
+            // 列名
             ci.setDb_name(rs.getString("COLUMN_NAME"));
+            // 列类型
             ci.setDb_type(rs.getString("DATA_TYPE"));
-            // 使用驼峰
-            ci.setName(StringTools.toHump(ci.getDb_name(), false));
-            // 不使用驼峰
-            // ci.setName(StringUtils.lowerCase(ci.getDb_name()));
+            // 属性名，使用驼峰
+            if (open_hump == null || open_hump == true)
+                ci.setName(StringTools.toHump(ci.getDb_name(), false));
+            else
+                ci.setName(StringUtils.lowerCase(ci.getDb_name()));
+            // 属性类型
             ci.setType(mapDbToJava(ci.getDb_type()));
+            // 属性首字母大写
             ci.setU_name(StringTools.firstUpper(ci.getName()));
+            // 主键
             if (ci.getDb_name().equals(db_id_name)) {
-                id_name = ci.name;
+                id_name = ci.getName();
                 ci.setDb_key(true);
                 id_type = ci.getType();
                 id_u_name = StringTools.firstUpper(id_name);
@@ -217,8 +240,7 @@ public class GenMybatisHandle {
         }
 
         // 列注释
-        sql = "SELECT TABLE_NAME, COLUMN_NAME, COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME = ?";
-        ps = conn.prepareStatement(sql);
+        ps = conn.prepareStatement(SQL_COL_COMMENTS);
         ps.setString(1, StringUtils.upperCase(db_table_name));
         rs = ps.executeQuery();
         while (rs.next()) {
@@ -257,30 +279,25 @@ public class GenMybatisHandle {
         package_name = ini.get("cfg", "package", String.class);
         table_prefix = ini.get("cfg", "table_prefix", String.class);
         open_swagger = ini.get("cfg", "open_swagger", Boolean.class);
+        open_hump = ini.get("cfg", "open_hump", Boolean.class);
 
-        List<Profile.Section> list = ini.getAll("type_annotation");
-        for (int i = 0; i < list.size(); i++) {
-            Profile.Section section = list.get(i);
-            for (String key : section.keySet()) {
-                typeAnnotationtype.put(key, section.get(key));
-            }
-        }
-
+        // 类型注解
+        getSectionKeys(ini, "type_annotation", typeAnnotationtype);
         // 数据库类型映射到 java 类型
-        List<Profile.Section> listTypeMappingJava = ini.getAll("dbtype_to_java");
-        for (int i = 0; i < listTypeMappingJava.size(); i++) {
-            Profile.Section section = listTypeMappingJava.get(i);
-            for (String key : section.keySet()) {
-                typeMapping.put(key, section.get(key));
-            }
-        }
-
+        getSectionKeys(ini, "dbtype_to_java", typeMapping);
         // 数据库类型映射到 jdbc 类型
-        List<Profile.Section> listTypeMappingJdbc = ini.getAll("dbtype_to_jdbc");
+        getSectionKeys(ini, "dbtype_to_jdbc", typeMappingJdbc);
+    }
+
+    /**
+     * 获取配置 section 所有key
+     */
+    private void getSectionKeys(Wini ini, String sectionName, Map<String, String> map) {
+        List<Profile.Section> listTypeMappingJdbc = ini.getAll(sectionName);
         for (int i = 0; i < listTypeMappingJdbc.size(); i++) {
             Profile.Section section = listTypeMappingJdbc.get(i);
             for (String key : section.keySet()) {
-                typeMappingJdbc.put(key, section.get(key));
+                map.put(key, section.get(key));
             }
         }
     }
@@ -357,7 +374,7 @@ public class GenMybatisHandle {
     }
 
 
-    public void writeVecocity(VelocityContext context, String templateName, String outFileName) throws IOException {
+    private void writeVecocity(VelocityContext context, String templateName, String outFileName) throws IOException {
         Properties properties=new Properties();
         properties.setProperty("resource.loader", "class");
         properties.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");

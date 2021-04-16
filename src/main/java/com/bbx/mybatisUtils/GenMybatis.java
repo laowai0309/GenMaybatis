@@ -1,13 +1,12 @@
+package com.bbx.mybatisUtils;
+
 import org.apache.commons.cli.*;
 import java.io.*;
 import java.net.URL;
 import java.sql.*;
 
 public class GenMybatis {
-    /**
-     * 程序入口
-     * @param args
-     */
+
     public static void main(String[] args) {
         String cfg_file = "config.ini";
 
@@ -28,13 +27,7 @@ public class GenMybatis {
             GenMybatisHandle gms = new GenMybatisHandle();
             gms.gen(path  + cfg_file, path);
 
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (ParseException | IOException | SQLException e) {
             e.printStackTrace();
         }
 

@@ -1,3 +1,5 @@
+package com.bbx.mybatisUtils;
+
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.UUID;
