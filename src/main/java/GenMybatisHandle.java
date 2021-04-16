@@ -192,7 +192,10 @@ public class GenMybatisHandle {
             ColumnInfo ci = new ColumnInfo();
             ci.setDb_name(rs.getString("COLUMN_NAME"));
             ci.setDb_type(rs.getString("DATA_TYPE"));
+            // 使用驼峰
             ci.setName(StringTools.toHump(ci.getDb_name(), false));
+            // 不使用驼峰
+            // ci.setName(StringUtils.lowerCase(ci.getDb_name()));
             ci.setType(mapDbToJava(ci.getDb_type()));
             ci.setU_name(StringTools.firstUpper(ci.getName()));
             if (ci.getDb_name().equals(db_id_name)) {
