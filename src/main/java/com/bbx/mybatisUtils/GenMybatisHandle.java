@@ -346,7 +346,8 @@ public class GenMybatisHandle {
         FileUtils.mkdir(basePath + "service/impl");
         FileUtils.mkdir(basePath + "mybatis-mapper");
         FileUtils.mkdir(basePath + "vue");
-        FileUtils.mkdir(basePath + "vue/" + entity_name);
+        FileUtils.mkdir(basePath + "vue/view");
+        FileUtils.mkdir(basePath + "vue/view/" + entity_name);
 
         procFreeMakeer(basePath + "templates", "entity.ftl", dataModel
                 ,basePath + "entity/" + entity_name + ".java");
@@ -365,9 +366,9 @@ public class GenMybatisHandle {
 
         procFreeMakeer(basePath + "templates", "mybatis.ftl", dataModel
                 ,basePath + "mybatis-mapper/" + entity_name + "Mapper.xml");
-//
-//        procFreeMakeer(basePath + "templates", "vue.ftl", dataModel
-//                ,basePath + "mybatis-mapper/" + "vue/view/" + entity_name + "ndex.vue");
+
+        procFreeMakeer(basePath + "templates", "vue.ftl", dataModel
+                ,basePath + "vue/view/" + entity_name + "/index.vue");
 
 
     }

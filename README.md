@@ -78,12 +78,13 @@ table_prefix：表前前缀
 
 ### 模板说明
 模板在resources\templates目录下：
-* controller.vm 生成 controller 模板
-* entity.vm  生成 entity 模板
-* mapper.vm 生成 mapper 模板
-* mybatis.vm 生成 mybatis xml 模板
-* service.vm 生成 service 模板
-* serviceImpl.vm 生成 serviceImpl 模板
+* controller.ftl controller 模板
+* entity.ftl entity 模板
+* mapper.ftl mapper 模板
+* mybatis.ftl mybatis xml 模板
+* service.ftl service 模板
+* serviceImpl.ftl 生成 serviceImpl 模板
+*  vue.ftl vue 模板
 
 #### 其它说明
   目前仅支持 oracle
