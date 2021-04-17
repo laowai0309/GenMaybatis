@@ -2,7 +2,7 @@ package ${package}.service.impl;
 
 
 /**
-* $table_comments ($db_table_name)
+* ${table_comments} (${db_table_name})
 */
 @Service
 public class ${entity_name}ServiceImpl implements ${entity_name}Service {

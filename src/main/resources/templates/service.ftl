@@ -2,7 +2,7 @@ package ${package}.service;
 
 
 /**
-* $table_comments ($db_table_name)
+* ${table_comments} (${db_table_name})
 */
 public interface ${entity_name}Service {
 

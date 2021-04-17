@@ -1,5 +1,6 @@
 package com.bbx.mybatisUtils;
 
+import freemarker.template.TemplateException;
 import org.apache.commons.cli.*;
 import java.io.*;
 import java.net.URL;
@@ -27,7 +28,7 @@ public class GenMybatis {
             GenMybatisHandle gms = new GenMybatisHandle();
             gms.gen(path  + cfg_file, path);
 
-        } catch (ParseException | IOException | SQLException e) {
+        } catch (ParseException | IOException | SQLException | TemplateException e) {
             e.printStackTrace();
         }
 

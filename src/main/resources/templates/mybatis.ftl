@@ -5,29 +5,31 @@
 <mapper namespace="${package}.mapper.${entity_name}Mapper">
     <!-- 字段映射 -->
     <resultMap id="${entity_name_var}Map" type="${package}.entity.${entity_name}">
-#foreach(${ci} in ${columns})
-#if (${ci.key})
+        <#list columns as ci>
+        <#if ci.key>
         <id column="${ci.db_name}" property="${ci.name}" jdbcType="${ci.jdbc_type}" />
-#else
+        <#else>
         <result column="${ci.db_name}" property="${ci.name}" jdbcType="${ci.jdbc_type}" />
-#end
-#end
+        </#if>
+        </#list>
     </resultMap>
 
     <!-- 表查询字段 -->
     <sql id="allColumns">
-#foreach(${ci} in ${columns})
-#if($velocityCount == 1)
-        t.${ci.db_name}#else, t.${ci.db_name}#end
-#end
-
+        <#list columns as ci>
+        <#if ci_has_next>
+        t.${ci.db_name},
+        <#else>
+        t.${ci.db_name}
+        </#if>
+        </#list>
     </sql>
 
     <!-- 根据主键查询 -->
     <select id="get" resultMap="${entity_name_var}Map" parameterType="${id_type}">
         SELECT
         <include refid="allColumns" />
-        FROM ${db_table_name} t WHERE t.${db_id_name} = #{${id_name}}
+        FROM ${db_table_name} t WHERE t.${db_id_name} = ${'#'}{${id_name}}
     </select>
 
     <!-- 分页查询 -->
@@ -35,21 +37,21 @@
         SELECT
         <include refid="allColumns" />
         FROM ${db_table_name} t WHERE 1 = 1
-#foreach(${ci} in ${columns})
+        <#list columns as ci>
         <if test="${ci.name} != null">
-#if(${ci.type} == "String")
-            AND ${ci.db_name} LIKE CONCAT(CONCAT('%', #{${ci.name}, jdbcType=${ci.jdbc_type}}), '%')
-#else
-            AND ${ci.db_name} = #{${ci.name}, jdbcType=${ci.jdbc_type}}
-#end
+        <#if ci.type  == "String">
+            AND ${ci.db_name} LIKE CONCAT(CONCAT('%', ${'#'}{${ci.name}, jdbcType=${ci.jdbc_type}}), '%')
+        <#else>
+            AND ${ci.db_name} = ${'#'}{${ci.name}, jdbcType=${ci.jdbc_type}}
+        </#if>
         </if>
-#end
+        </#list>
         <!--
         <if test="beginTime != null">
-            AND CREATE_TIME <![CDATA[ >= ]]> to_date(#{beginTime, jdbcType=VARCHAR}, 'YYYY-MM-DD')
+            AND CREATE_TIME <![CDATA[ >= ]]> to_date(${'#'}{beginTime, jdbcType=VARCHAR}, 'YYYY-MM-DD')
         </if>
         <if test="endTime != null">
-            AND CREATE_TIME <![CDATA[ <= ]]> to_date(#{endTime, jdbcType=VARCHAR}, 'YYYY-MM-DD')
+            AND CREATE_TIME <![CDATA[ <= ]]> to_date(${'#'}{endTime, jdbcType=VARCHAR}, 'YYYY-MM-DD')
         </if>
         -->
 
@@ -61,19 +63,21 @@
             SELECT ${db_table_name}_S.NEXTVAL FROM DUAL
         </selectKey>
         INSERT INTO ${db_table_name} (
-#foreach(${ci} in ${columns})
-#if($velocityCount == 1)
-            ${ci.db_name}#else,
-            ${ci.db_name}#end
-#end
-
+            <#list columns as ci>
+            <#if ci_has_next>
+            ${ci.db_name},
+            <#else >
+            ${ci.db_name}
+            </#if>
+            </#list>
         ) VALUES (
-#foreach(${ci} in ${columns})
-#if($velocityCount == 1)
-        #{${ci.name}, jdbcType=${ci.jdbc_type}}#else,
-        #{${ci.name}, jdbcType=${ci.jdbc_type}}#end
-#end
-
+        <#list columns as ci>
+        <#if ci_has_next>
+            ${'#'}{${ci.name}, jdbcType=${ci.jdbc_type}},
+        <#else>
+            ${'#'}{${ci.name}, jdbcType=${ci.jdbc_type}}
+        </#if>
+        </#list>
         )
     </insert>
 
@@ -81,18 +85,18 @@
     <update id="update">
         UPDATE  ${db_table_name}
         <set>
-#foreach(${ci} in ${columns})
+        <#list columns as ci>
         <if test="${ci.name} != null">
-            ${ci.db_name} = #{${ci.name},jdbcType=${ci.jdbc_type}},
+            ${ci.db_name} = ${'#'}{${ci.name},jdbcType=${ci.jdbc_type}},
         </if>
-#end
+        </#list>
         </set>
-        WHERE ${db_id_name} = #{${id_name}}
+        WHERE ${db_id_name} = ${'#'}{${id_name}}
     </update>
 
     <!-- 根据主键删除字典类型表 -->
     <delete id="del" parameterType="${id_type}">
-        DELETE FROM ${db_table_name} WHERE ${db_id_name} = #{${id_name}}
+        DELETE FROM ${db_table_name} WHERE ${db_id_name} = ${'#'}{${id_name}}
     </delete>
 
 </mapper>

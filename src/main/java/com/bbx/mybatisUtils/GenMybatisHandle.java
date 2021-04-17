@@ -2,6 +2,10 @@ package com.bbx.mybatisUtils;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import freemarker.cache.FileTemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.velocity.VelocityContext;
@@ -157,7 +161,7 @@ public class GenMybatisHandle {
      * @throws IOException
      * @throws SQLException
      */
-    public void gen(String cfg, String basePath) throws IOException, SQLException {
+    public void gen(String cfg, String basePath) throws IOException, SQLException, TemplateException {
         this.cfg_file = cfg;
         this.basePath = basePath;
 
@@ -319,75 +323,69 @@ public class GenMybatisHandle {
      * 处理生成
      * @throws IOException
      */
-    private void genHandle() throws IOException {
-        VelocityContext context = new VelocityContext();
+    private void genHandle() throws IOException, TemplateException {
+        Map<String, Object> dataModel = new HashMap<>();
 
-        context.put("package", this.package_name);
-        context.put("table_comments", this.table_comments);
-        context.put("db_table_name", this.db_table_name);
-        context.put("entity_name", this.entity_name);
-        context.put("columns", this.columns);
-        context.put("open_swagger", this.open_swagger);
-        context.put("entity_name_var", this.entity_name_var);
-        context.put("id_type", this.id_type);
-        context.put("id_name", this.id_name);
-        context.put("id_u_name", this.id_u_name);
-        context.put("id_comments", this.id_comments);
-        context.put("db_id_name", this.db_id_name);
+        dataModel.put("package", this.package_name);
+        dataModel.put("table_comments", this.table_comments);
+        dataModel.put("db_table_name", this.db_table_name);
+        dataModel.put("entity_name", this.entity_name);
+        dataModel.put("columns", this.columns);
+        dataModel.put("open_swagger", this.open_swagger);
+        dataModel.put("entity_name_var", this.entity_name_var);
+        dataModel.put("id_type", this.id_type);
+        dataModel.put("id_name", this.id_name);
+        dataModel.put("id_u_name", this.id_u_name);
+        dataModel.put("id_comments", this.id_comments);
+        dataModel.put("db_id_name", this.db_id_name);
 
-        File file = new File(basePath + "entity");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        FileUtils.mkdir(basePath + "entity");
+        FileUtils.mkdir(basePath + "controller");
+        FileUtils.mkdir(basePath + "mapper");
+        FileUtils.mkdir(basePath + "service");
+        FileUtils.mkdir(basePath + "service/impl");
+        FileUtils.mkdir(basePath + "mybatis-mapper");
+        FileUtils.mkdir(basePath + "vue");
+        FileUtils.mkdir(basePath + "vue/" + entity_name);
 
-        file = new File(basePath + "controller");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        procFreeMakeer(basePath + "templates", "entity.ftl", dataModel
+                ,basePath + "entity/" + entity_name + ".java");
 
-        file = new File(basePath + "service");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        procFreeMakeer(basePath + "templates", "controller.ftl", dataModel
+                ,basePath + "controller/" + entity_name + "Controller.java");
 
-        file = new File(basePath + "service/impl");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        procFreeMakeer(basePath + "templates", "mapper.ftl", dataModel
+                ,basePath + "mapper/" + entity_name + "Mapper.java");
 
-        file = new File(basePath + "mapper");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        procFreeMakeer(basePath + "templates", "service.ftl", dataModel
+                ,basePath + "service/" + entity_name + "Service.java");
 
-        file = new File(basePath + "mybatis-mapper");
-        if(!file.exists()){
-            file.mkdir();
-        }
+        procFreeMakeer(basePath + "templates", "serviceImpl.ftl", dataModel
+                ,basePath + "service/impl/" + entity_name + "ServiceImpl.java");
 
-        writeVecocity(context, "templates/entity.vm", basePath + "entity/" + entity_name + ".java");
-        writeVecocity(context, "templates/controller.vm", basePath + "controller/" + entity_name + "Controller.java");
-        writeVecocity(context, "templates/mapper.vm", basePath + "mapper/" + entity_name + "Mapper.java");
-        writeVecocity(context, "templates/service.vm", basePath + "service/" + entity_name + "Service.java");
-        writeVecocity(context, "templates/serviceImpl.vm", basePath + "service/impl/" + entity_name + "ServiceImpl.java");
-        writeVecocity(context, "templates/mybatis.vm", basePath + "mybatis-mapper/" + entity_name_var + "Mapper.xml");
+        procFreeMakeer(basePath + "templates", "mybatis.ftl", dataModel
+                ,basePath + "mybatis-mapper/" + entity_name + "Mapper.xml");
+//
+//        procFreeMakeer(basePath + "templates", "vue.ftl", dataModel
+//                ,basePath + "mybatis-mapper/" + "vue/view/" + entity_name + "ndex.vue");
+
+
     }
 
+    private void procFreeMakeer(String templatePath, String templateName, Map<String, Object> dataModel,
+                                String outFilename) throws IOException, TemplateException {
+        Configuration cfg = new Configuration();
+        cfg.setClassicCompatible(true);
+        FileTemplateLoader ftl = new FileTemplateLoader(new File(templatePath));
+        cfg.setTemplateLoader(ftl);
 
-    private void writeVecocity(VelocityContext context, String templateName, String outFileName) throws IOException {
-        Properties properties=new Properties();
-        properties.setProperty("resource.loader", "class");
-        properties.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-        properties.setProperty(Velocity.ENCODING_DEFAULT, "UTF-8");
-        properties.setProperty(Velocity.INPUT_ENCODING, "UTF-8");
-        properties.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
+        Template template = cfg.getTemplate(templateName);
+        template.process(dataModel, new FileWriter(new File(outFilename)));
 
-        VelocityEngine velocityEngine = new VelocityEngine(properties);
-        StringWriter sw = new StringWriter();
-        velocityEngine.mergeTemplate(templateName, "utf-8", context, sw);
-        IOUtils.write(sw.toString(), new FileOutputStream(outFileName));
-
+        // 将数据打印到控制台的
+        // template.process(dataModel,new PrintWriter(System.out));
     }
+
 
 
 

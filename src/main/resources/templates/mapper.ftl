@@ -2,7 +2,7 @@ package ${package}.mapper;
 
 
 /**
-* $table_comments ($db_table_name)
+* ${table_comments} (${db_table_name})
 */
 @Mapper
 public interface ${entity_name}Mapper {
